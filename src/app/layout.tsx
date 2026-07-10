@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Patoquizz — Quiz de géographie française",
   description:
-    "Un quiz quotidien de géographie française. 6 questions, une seule tentative par question.",
+    "Un quiz quotidien de géographie française. 10 questions, une seule tentative par question.",
   icons: {
     icon: "/favicon.png",
     apple: "/logo.png",

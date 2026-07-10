@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { QUESTIONS_PER_DAY } from "@/lib/game-config";
 
 export async function GET(request: Request) {
   try {
@@ -33,15 +34,9 @@ export async function GET(request: Request) {
         : 0;
     const totalPoints = results?.reduce((sum, result) => sum + result.points, 0) ?? 0;
 
-    const distribution: Record<number, number> = {
-      0: 0,
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-      6: 0,
-    };
+    const distribution: Record<number, number> = Object.fromEntries(
+      Array.from({ length: QUESTIONS_PER_DAY + 1 }, (_, i) => [i, 0])
+    );
 
     for (const result of results ?? []) {
       distribution[result.score] = (distribution[result.score] ?? 0) + 1;

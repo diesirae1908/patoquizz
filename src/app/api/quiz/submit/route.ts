@@ -10,6 +10,11 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getParisDateString } from "@/lib/dates";
+import {
+  ANSWERS_WHEN_BANKED,
+  MAGNET_REWARD_MIN_SCORE,
+  QUESTIONS_PER_DAY,
+} from "@/lib/game-config";
 import type { JokerState, QuestionResult } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -36,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const expectedCount = jokerPlayed ? 6 : 5;
+    const expectedCount = jokerPlayed ? QUESTIONS_PER_DAY : ANSWERS_WHEN_BANKED;
     if (answers.length !== expectedCount) {
       return NextResponse.json(
         { error: `Nombre de réponses invalide (${answers.length}/${expectedCount}).` },
@@ -121,7 +126,7 @@ export async function POST(request: Request) {
     }
 
     let reward = null;
-    if (score >= 5) {
+    if (score >= MAGNET_REWARD_MIN_SCORE) {
       const ownedQuery = admin
         .from("collected_departments")
         .select("dept_code");

@@ -13,6 +13,13 @@ import {
   formatTimeMs,
   getSpeedBonusRatio,
 } from "@/lib/scoring";
+import {
+  ANSWERS_WHEN_BANKED,
+  JOKER_CHOICE_AFTER_INDEX,
+  JOKER_QUESTION_INDEX,
+  MAGNET_REWARD_MIN_SCORE,
+  QUESTIONS_PER_DAY,
+} from "@/lib/game-config";
 import { Countdown } from "./Countdown";
 import {
   PointsBreakdownCard,
@@ -273,9 +280,9 @@ export function QuizGame() {
   async function handleNext() {
     if (!quiz || !feedback) return;
 
-    const justFinishedQ5 = currentIndex === 4;
+    const justFinishedBeforeJoker = currentIndex === JOKER_CHOICE_AFTER_INDEX;
 
-    if (justFinishedQ5) {
+    if (justFinishedBeforeJoker) {
       setFeedback(null);
       setAnswer("");
       setShowJokerChoice(true);
@@ -302,7 +309,7 @@ export function QuizGame() {
 
   function handleAcceptJoker() {
     setShowJokerChoice(false);
-    setCurrentIndex(5);
+    setCurrentIndex(JOKER_QUESTION_INDEX);
     setAnswer("");
     setFeedback(null);
   }
@@ -327,21 +334,23 @@ export function QuizGame() {
 
   if (completed) {
     const finalScore = score || results.filter((r) => r.correct).length;
-    const displayResults = joker.played ? results : results.slice(0, 5);
+    const displayResults = joker.played
+      ? results.slice(0, ANSWERS_WHEN_BANKED)
+      : results;
 
     return (
       <div className="mx-auto max-w-xl space-y-6 text-center">
         <h2 className="text-3xl font-bold text-white">
-          {finalScore === 6
+          {finalScore === QUESTIONS_PER_DAY
             ? "Parfait !"
-            : finalScore >= 5
+            : finalScore >= MAGNET_REWARD_MIN_SCORE
               ? "Bravo !"
-              : finalScore >= 4
+              : finalScore >= Math.floor(QUESTIONS_PER_DAY * 0.67)
                 ? "Pas mal !"
                 : "Perdu"}
         </h2>
         <p className="text-white/70">
-          {finalScore}/6 · {points} points
+          {finalScore}/{QUESTIONS_PER_DAY} · {points} points
         </p>
 
         {pointsBreakdown && (
@@ -429,7 +438,7 @@ export function QuizGame() {
   }
 
   const currentQuestion = quiz.questions[currentIndex];
-  const isJokerQuestion = currentIndex === 5;
+  const isJokerQuestion = currentIndex === JOKER_QUESTION_INDEX;
   const speedRatio = getSpeedBonusRatio(elapsedMs);
   const speedPercent = Math.round(speedRatio * 100);
 
@@ -443,11 +452,11 @@ export function QuizGame() {
           )}
         </p>
         <p className="mt-2 text-sm text-white/60">
-          Question {currentIndex + 1}/6 · Difficulté {currentQuestion.difficulty}
+          Question {currentIndex + 1}/{QUESTIONS_PER_DAY} · Difficulté {currentQuestion.difficulty}
         </p>
       </div>
 
-      <div className="flex justify-center gap-2">
+      <div className="flex flex-wrap justify-center gap-1.5">
         {quiz.questions.map((question, index) => {
           const result = results.find((item) => item.question_id === question.id);
           let color = "bg-white/10";
@@ -455,14 +464,18 @@ export function QuizGame() {
             color = result.correct ? "bg-emerald-500" : "bg-red-500";
           } else if (index === currentIndex) {
             color = isJokerQuestion ? "bg-amber-500" : "bg-white/30";
-          } else if (index === 5 && !joker.played && results.length === 5) {
+          } else if (
+            index === JOKER_QUESTION_INDEX &&
+            !joker.played &&
+            results.length === ANSWERS_WHEN_BANKED
+          ) {
             color = "bg-amber-500/30";
           }
 
           return (
             <div
               key={question.id}
-              className={`h-3 w-3 rounded-full ${color}`}
+              className={`h-2.5 w-2.5 rounded-full ${color}`}
             />
           );
         })}
@@ -548,7 +561,7 @@ export function QuizGame() {
                 : "bg-white text-black hover:bg-white/90"
             }`}
           >
-            {currentIndex === 4
+            {currentIndex === JOKER_CHOICE_AFTER_INDEX
               ? "Continuer"
               : currentIndex === quiz.questions.length - 1
                 ? "Voir les résultats"

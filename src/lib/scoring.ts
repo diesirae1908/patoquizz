@@ -1,4 +1,8 @@
 import type { QuestionResult, JokerState } from "./types";
+import {
+  ANSWERS_WHEN_BANKED,
+  QUESTIONS_PER_DAY,
+} from "./game-config";
 
 const BASE_POINTS: Record<number, number> = {
   1: 10,
@@ -112,7 +116,9 @@ export function buildShareText({
   joker: JokerState;
   siteUrl: string;
 }): string {
-  const regularResults = joker.played ? results.slice(0, 5) : results;
+  const regularResults = joker.played
+    ? results.slice(0, ANSWERS_WHEN_BANKED)
+    : results;
   const grid = regularResults
     .map((result) => (result.correct ? "🟩" : "🟥"))
     .join("");

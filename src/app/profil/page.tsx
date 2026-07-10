@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DepartmentCollection } from "@/components/DepartmentCollection";
 import type { UserStats } from "@/lib/types";
+import { QUESTIONS_PER_DAY } from "@/lib/game-config";
 import { v4 as uuidv4 } from "uuid";
 
 const GUEST_KEY = "patoquizz_guest_id";
@@ -87,7 +88,7 @@ export default function ProfilPage() {
       {stats && (
         <div className="grid gap-4 sm:grid-cols-2">
           <StatCard label="Parties jouées" value={stats.games_played} />
-          <StatCard label="Score moyen" value={`${stats.average_score}/6`} />
+          <StatCard label="Score moyen" value={`${stats.average_score}/${QUESTIONS_PER_DAY}`} />
           <StatCard label="Points totaux" value={stats.total_points} />
           <StatCard label="Magnets collectés" value={`${stats.collection_count}/101`} />
           <StatCard label="Série actuelle" value={stats.current_streak} />
@@ -99,14 +100,14 @@ export default function ProfilPage() {
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
           <h2 className="mb-4 text-lg font-semibold">Distribution des scores</h2>
           <div className="space-y-2">
-            {[6, 5, 4, 3, 2, 1, 0].map((score) => {
+            {Array.from({ length: QUESTIONS_PER_DAY + 1 }, (_, i) => QUESTIONS_PER_DAY - i).map((score) => {
               const count = stats.distribution[score] ?? 0;
               const max = Math.max(...Object.values(stats.distribution), 1);
               const width = `${(count / max) * 100}%`;
 
               return (
                 <div key={score} className="flex items-center gap-3 text-sm">
-                  <span className="w-8 text-white/60">{score}/6</span>
+                  <span className="w-10 text-white/60">{score}/{QUESTIONS_PER_DAY}</span>
                   <div className="h-4 flex-1 rounded bg-white/10">
                     <div
                       className="h-4 rounded bg-emerald-500"

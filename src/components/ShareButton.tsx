@@ -8,6 +8,7 @@ import type {
   QuestionResult,
 } from "@/lib/types";
 import { buildShareText } from "@/lib/scoring";
+import { QUESTIONS_PER_DAY } from "@/lib/game-config";
 
 interface ShareButtonProps {
   quizNumber: number;
@@ -33,7 +34,7 @@ export function ShareButton({
     const text = buildShareText({
       quizNumber,
       score,
-      totalQuestions: 6,
+      totalQuestions: QUESTIONS_PER_DAY,
       results,
       joker,
       siteUrl,

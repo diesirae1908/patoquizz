@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { QUESTIONS_PER_DAY, SLOT_DIFFICULTIES } from "../game-config";
 import type { Question } from "../types";
 import { CITIES } from "./cities";
 import { DEPARTMENTS } from "./departments";
@@ -161,8 +162,8 @@ export function buildDailyQuizzes(
     const quizDate = currentDate.toISOString().slice(0, 10);
     const questionIds: string[] = [];
 
-    for (let slot = 1; slot <= 6; slot += 1) {
-      const difficulty = slot;
+    for (let slot = 0; slot < QUESTIONS_PER_DAY; slot += 1) {
+      const difficulty = SLOT_DIFFICULTIES[slot];
       const pool = (byDifficulty[difficulty] ?? []).filter(
         (question) => !usedIds.has(question.id)
       );
@@ -182,7 +183,7 @@ export function buildDailyQuizzes(
         continue;
       }
 
-      const pick = pool[(day * 7 + slot) % pool.length];
+      const pick = pool[(day * 7 + slot + 1) % pool.length];
       questionIds.push(pick.id);
       usedIds.add(pick.id);
     }

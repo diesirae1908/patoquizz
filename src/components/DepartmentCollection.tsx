@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { DepartmentMagnet as DepartmentMagnetType } from "@/lib/types";
 import { DepartmentMagnet } from "./DepartmentMagnet";
 import { v4 as uuidv4 } from "uuid";
+import { MAGNET_REWARD_MIN_SCORE, QUESTIONS_PER_DAY } from "@/lib/game-config";
 
 const GUEST_KEY = "patoquizz_guest_id";
 
@@ -50,7 +51,7 @@ export function DepartmentCollection() {
         </span>
       </div>
       <p className="mb-4 text-sm text-white/50">
-        Gagnez un département à chaque quiz avec 5 bonnes réponses ou plus.
+        Gagnez un département avec {MAGNET_REWARD_MIN_SCORE} bonnes réponses ou plus sur {QUESTIONS_PER_DAY}.
         Collectionnez-les tous comme les magnets Père Dodu !
       </p>
       <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
