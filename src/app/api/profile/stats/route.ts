@@ -50,6 +50,8 @@ export async function GET(request: Request) {
     const { currentStreak, bestStreak } = calculateStreaks(results ?? []);
 
     let username: string | null = null;
+    let collectionCount = 0;
+
     if (user) {
       const { data: profile } = await admin
         .from("profiles")
@@ -57,6 +59,18 @@ export async function GET(request: Request) {
         .eq("id", user.id)
         .maybeSingle();
       username = profile?.username ?? user.user_metadata?.username ?? null;
+
+      const { count } = await admin
+        .from("collected_departments")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      collectionCount = count ?? 0;
+    } else if (guestId) {
+      const { count } = await admin
+        .from("collected_departments")
+        .select("*", { count: "exact", head: true })
+        .eq("guest_id", guestId);
+      collectionCount = count ?? 0;
     }
 
     return NextResponse.json({
@@ -67,6 +81,7 @@ export async function GET(request: Request) {
       best_streak: bestStreak,
       distribution,
       username,
+      collection_count: collectionCount,
     });
   } catch (error) {
     console.error(error);

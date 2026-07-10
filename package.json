@@ -9,6 +9,7 @@
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
     "migrate": "tsx scripts/migrate-api.ts",
+    "migrate:v2": "tsx scripts/migrate-api.ts supabase/migrations/002_gameplay_v2.sql",
     "questions:count": "tsx -e \"import { getQuestionCount } from './src/lib/geography/question-generator'; console.log(getQuestionCount())\""
   },
   "dependencies": {

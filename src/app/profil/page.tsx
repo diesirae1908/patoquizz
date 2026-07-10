@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DepartmentCollection } from "@/components/DepartmentCollection";
 import type { UserStats } from "@/lib/types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -88,6 +89,7 @@ export default function ProfilPage() {
           <StatCard label="Parties jouées" value={stats.games_played} />
           <StatCard label="Score moyen" value={`${stats.average_score}/6`} />
           <StatCard label="Points totaux" value={stats.total_points} />
+          <StatCard label="Magnets collectés" value={`${stats.collection_count}/101`} />
           <StatCard label="Série actuelle" value={stats.current_streak} />
           <StatCard label="Meilleure série" value={stats.best_streak} />
         </div>
@@ -118,6 +120,8 @@ export default function ProfilPage() {
           </div>
         </div>
       )}
+
+      <DepartmentCollection />
 
       <div className="rounded-xl border border-white/10 bg-white/5 p-6">
         <h2 className="mb-4 text-lg font-semibold">Compte</h2>

@@ -67,6 +67,7 @@ export default function ClassementPage() {
                 <th className="px-4 py-3">Joueur</th>
                 <th className="px-4 py-3">Points</th>
                 <th className="px-4 py-3">Score</th>
+                <th className="px-4 py-3">Temps</th>
                 <th className="px-4 py-3">Série</th>
               </tr>
             </thead>
@@ -82,6 +83,11 @@ export default function ClassementPage() {
                   </td>
                   <td className="px-4 py-3">{entry.points}</td>
                   <td className="px-4 py-3">{entry.score}</td>
+                  <td className="px-4 py-3 text-white/50">
+                    {entry.total_time_ms
+                      ? `${Math.round(entry.total_time_ms / 1000)}s`
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3">{entry.streak}</td>
                 </tr>
               ))}

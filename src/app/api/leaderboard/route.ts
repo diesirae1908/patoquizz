@@ -16,6 +16,7 @@ export async function GET(request: Request) {
         .eq("quiz_date", today)
         .order("points", { ascending: false })
         .order("score", { ascending: false })
+        .order("total_time_ms", { ascending: true })
         .limit(50);
 
       if (error) throw error;
@@ -28,6 +29,7 @@ export async function GET(request: Request) {
           points: entry.points,
           score: entry.score,
           streak: 0,
+          total_time_ms: entry.total_time_ms,
         })),
       });
     }
@@ -37,6 +39,7 @@ export async function GET(request: Request) {
       .select("*")
       .order("total_points", { ascending: false })
       .order("total_score", { ascending: false })
+      .order("total_time_ms", { ascending: true })
       .limit(50);
 
     if (error) throw error;
@@ -55,6 +58,7 @@ export async function GET(request: Request) {
           points: entry.total_points,
           score: entry.total_score,
           streak,
+          total_time_ms: entry.total_time_ms,
         };
       })
     );

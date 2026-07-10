@@ -27,6 +27,29 @@ export interface QuestionResult {
   question_id: string;
   correct: boolean;
   user_answer: string;
+  time_ms: number;
+}
+
+export interface JokerState {
+  played: boolean;
+  won: boolean | null;
+}
+
+export interface PointsBreakdown {
+  basePoints: number;
+  speedBonus: number;
+  subtotal: number;
+  jokerMultiplier: number;
+  finalPoints: number;
+  totalTimeMs: number;
+}
+
+export interface CollectedDepartmentReward {
+  dept_code: string;
+  dept_name: string;
+  region: string;
+  region_color: string;
+  is_new: boolean;
 }
 
 export interface QuizResult {
@@ -38,6 +61,10 @@ export interface QuizResult {
   answers: QuestionResult[];
   score: number;
   points: number;
+  base_points: number;
+  joker_played: boolean;
+  joker_won: boolean | null;
+  total_time_ms: number;
   completed_at: string;
 }
 
@@ -55,6 +82,7 @@ export interface LeaderboardEntry {
   score: number;
   streak: number;
   country: string | null;
+  total_time_ms?: number;
 }
 
 export interface UserStats {
@@ -65,6 +93,16 @@ export interface UserStats {
   best_streak: number;
   distribution: Record<number, number>;
   username: string | null;
+  collection_count: number;
+}
+
+export interface DepartmentMagnet {
+  code: string;
+  name: string;
+  region: string;
+  color: string;
+  owned: boolean;
+  collected_at?: string;
 }
 
 export interface QuizState {
@@ -81,4 +119,9 @@ export interface QuizState {
   completed: boolean;
   score: number;
   points: number;
+  jokerPlayed: boolean;
+  jokerWon: boolean | null;
+  showJokerChoice: boolean;
+  pointsBreakdown: PointsBreakdown | null;
+  reward: CollectedDepartmentReward | null;
 }

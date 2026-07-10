@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from "uuid";
 import type { Question } from "../types";
 import { CITIES } from "./cities";
 import { DEPARTMENTS } from "./departments";
+import { EASY_QUESTIONS } from "./easy";
+import { EXPERT_QUESTIONS } from "./expert";
 import { MISC_QUESTIONS } from "./misc";
 
 function clampDifficulty(value: number): number {
@@ -12,8 +14,23 @@ function deptByCode(code: string) {
   return DEPARTMENTS.find((dept) => dept.code === code);
 }
 
+function notorietyToDifficulty(notoriety: number, offset = 0): number {
+  return clampDifficulty(notoriety + offset);
+}
+
 export function generateAllQuestions(): Question[] {
   const questions: Question[] = [];
+
+  for (const easy of EASY_QUESTIONS) {
+    questions.push({
+      id: uuidv4(),
+      text: easy.text,
+      accepted_answers: easy.accepted_answers,
+      display_answer: easy.display_answer,
+      difficulty: 1,
+      category: "divers",
+    });
+  }
 
   for (const dept of DEPARTMENTS) {
     questions.push({
@@ -21,7 +38,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quelle est la préfecture du ${dept.name} ?`,
       accepted_answers: [dept.prefecture, dept.name, dept.code],
       display_answer: dept.prefecture,
-      difficulty: clampDifficulty(dept.notoriety),
+      difficulty: notorietyToDifficulty(dept.notoriety),
       category: "prefecture",
     });
 
@@ -30,7 +47,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quel est le numéro du département ${dept.name} ?`,
       accepted_answers: [dept.code],
       display_answer: dept.code,
-      difficulty: clampDifficulty(dept.notoriety + 1),
+      difficulty: notorietyToDifficulty(dept.notoriety, 1),
       category: "numero_departement",
     });
 
@@ -39,7 +56,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quel département porte le numéro ${dept.code} ?`,
       accepted_answers: [dept.name],
       display_answer: dept.name,
-      difficulty: clampDifficulty(dept.notoriety + 1),
+      difficulty: notorietyToDifficulty(dept.notoriety, 1),
       category: "departement_numero",
     });
 
@@ -48,7 +65,7 @@ export function generateAllQuestions(): Question[] {
       text: `Dans quelle région se trouve le département ${dept.name} ?`,
       accepted_answers: [dept.region],
       display_answer: dept.region,
-      difficulty: clampDifficulty(dept.notoriety + 1),
+      difficulty: notorietyToDifficulty(dept.notoriety, 1),
       category: "region",
     });
 
@@ -58,7 +75,7 @@ export function generateAllQuestions(): Question[] {
         text: `Citez une sous-préfecture du ${dept.name}.`,
         accepted_answers: dept.sousPrefectures,
         display_answer: sousPrefecture,
-        difficulty: clampDifficulty(dept.notoriety + 2),
+        difficulty: notorietyToDifficulty(dept.notoriety, 2),
         category: "sous_prefecture",
       });
 
@@ -67,7 +84,7 @@ export function generateAllQuestions(): Question[] {
         text: `Quelle est la sous-préfecture du ${dept.name} située à ${sousPrefecture} ?`,
         accepted_answers: [sousPrefecture],
         display_answer: sousPrefecture,
-        difficulty: clampDifficulty(dept.notoriety + 2),
+        difficulty: notorietyToDifficulty(dept.notoriety, 2),
         category: "sous_prefecture",
       });
     }
@@ -82,7 +99,7 @@ export function generateAllQuestions(): Question[] {
       text: `Dans quel département se trouve la ville de ${city.name} ?`,
       accepted_answers: [dept.name, dept.code],
       display_answer: dept.name,
-      difficulty: clampDifficulty(city.notoriety),
+      difficulty: notorietyToDifficulty(city.notoriety),
       category: "ville_departement",
     });
   }
@@ -94,6 +111,17 @@ export function generateAllQuestions(): Question[] {
       accepted_answers: misc.accepted_answers,
       display_answer: misc.display_answer,
       difficulty: misc.difficulty,
+      category: "divers",
+    });
+  }
+
+  for (const expert of EXPERT_QUESTIONS) {
+    questions.push({
+      id: uuidv4(),
+      text: expert.text,
+      accepted_answers: expert.accepted_answers,
+      display_answer: expert.display_answer,
+      difficulty: expert.difficulty,
       category: "divers",
     });
   }
@@ -133,7 +161,8 @@ export function buildDailyQuizzes(
     const quizDate = currentDate.toISOString().slice(0, 10);
     const questionIds: string[] = [];
 
-    for (let difficulty = 1; difficulty <= 6; difficulty += 1) {
+    for (let slot = 1; slot <= 6; slot += 1) {
+      const difficulty = slot;
       const pool = (byDifficulty[difficulty] ?? []).filter(
         (question) => !usedIds.has(question.id)
       );
@@ -144,7 +173,7 @@ export function buildDailyQuizzes(
             question.difficulty === difficulty && !usedIds.has(question.id)
         );
         const pick =
-          fallbackPool[day % fallbackPool.length] ??
+          fallbackPool[(day * 7 + slot) % Math.max(fallbackPool.length, 1)] ??
           questions.find((question) => !usedIds.has(question.id));
         if (pick) {
           questionIds.push(pick.id);
@@ -153,7 +182,7 @@ export function buildDailyQuizzes(
         continue;
       }
 
-      const pick = pool[(day * 7 + difficulty) % pool.length];
+      const pick = pool[(day * 7 + slot) % pool.length];
       questionIds.push(pick.id);
       usedIds.add(pick.id);
     }
@@ -170,4 +199,13 @@ export function buildDailyQuizzes(
 
 export function getQuestionCount(): number {
   return generateAllQuestions().length;
+}
+
+export function getDifficultyCounts(): Record<number, number> {
+  const questions = generateAllQuestions();
+  const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  for (const q of questions) {
+    counts[q.difficulty] = (counts[q.difficulty] ?? 0) + 1;
+  }
+  return counts;
 }

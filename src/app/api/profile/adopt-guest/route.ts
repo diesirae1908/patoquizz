@@ -26,6 +26,12 @@ export async function POST(request: Request) {
       .is("user_id", null);
 
     await admin
+      .from("collected_departments")
+      .update({ user_id: user.id, guest_id: null })
+      .eq("guest_id", guestId)
+      .is("user_id", null);
+
+    await admin
       .from("profiles")
       .update({ guest_id: guestId })
       .eq("id", user.id);

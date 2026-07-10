@@ -32,10 +32,10 @@ async function migrate() {
     throw new Error("SUPABASE_ACCESS_TOKEN is required");
   }
 
-  const sql = readFileSync(
-    join(process.cwd(), "supabase/migrations/001_initial_schema.sql"),
-    "utf8"
-  );
+  const migrationFile =
+    process.argv[2] ?? "supabase/migrations/001_initial_schema.sql";
+
+  const sql = readFileSync(join(process.cwd(), migrationFile), "utf8");
 
   const statements = sql
     .split(";")

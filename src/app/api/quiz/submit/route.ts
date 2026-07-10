@@ -1,22 +1,45 @@
 import { NextResponse } from "next/server";
-import { calculatePoints, calculateScore } from "@/lib/scoring";
+import {
+  calculatePointsBreakdown,
+  calculateScore,
+} from "@/lib/scoring";
+import {
+  getRegionColor,
+  pickRandomUncollectedDepartment,
+} from "@/lib/collection";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getParisDateString } from "@/lib/dates";
-import type { QuestionResult } from "@/lib/types";
+import type { JokerState, QuestionResult } from "@/lib/types";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { guestId, answers, difficulties } = body as {
+    const {
+      guestId,
+      answers,
+      difficulties,
+      jokerPlayed = false,
+      jokerWon = null,
+    } = body as {
       guestId?: string;
       answers: QuestionResult[];
       difficulties: number[];
+      jokerPlayed?: boolean;
+      jokerWon?: boolean | null;
     };
 
-    if (!answers || !Array.isArray(answers) || answers.length !== 6) {
+    if (!answers || !Array.isArray(answers)) {
       return NextResponse.json(
         { error: "Résultat invalide." },
+        { status: 400 }
+      );
+    }
+
+    const expectedCount = jokerPlayed ? 6 : 5;
+    if (answers.length !== expectedCount) {
+      return NextResponse.json(
+        { error: `Nombre de réponses invalide (${answers.length}/${expectedCount}).` },
         { status: 400 }
       );
     }
@@ -42,8 +65,13 @@ export async function POST(request: Request) {
       );
     }
 
+    const joker: JokerState = {
+      played: jokerPlayed,
+      won: jokerPlayed ? jokerWon : null,
+    };
+
     const score = calculateScore(answers);
-    const points = calculatePoints(answers, difficulties);
+    const breakdown = calculatePointsBreakdown(answers, difficulties, joker);
 
     const payload = {
       user_id: user?.id ?? null,
@@ -52,7 +80,11 @@ export async function POST(request: Request) {
       quiz_number: quiz.quiz_number,
       answers,
       score,
-      points,
+      points: breakdown.finalPoints,
+      base_points: breakdown.subtotal,
+      joker_played: joker.played,
+      joker_won: joker.won,
+      total_time_ms: breakdown.totalTimeMs,
       completed_at: new Date().toISOString(),
     };
 
@@ -88,10 +120,65 @@ export async function POST(request: Request) {
       result = data;
     }
 
+    let reward = null;
+    if (score >= 5) {
+      const ownedQuery = admin
+        .from("collected_departments")
+        .select("dept_code");
+
+      const { data: owned } = payload.user_id
+        ? await ownedQuery.eq("user_id", payload.user_id)
+        : await ownedQuery.eq("guest_id", payload.guest_id!);
+
+      const ownedCodes = (owned ?? []).map((item) => item.dept_code);
+      const picked = pickRandomUncollectedDepartment(ownedCodes);
+
+      if (picked) {
+        const { data: existingDept } = payload.user_id
+          ? await admin
+              .from("collected_departments")
+              .select("id")
+              .eq("user_id", payload.user_id)
+              .eq("dept_code", picked.code)
+              .maybeSingle()
+          : await admin
+              .from("collected_departments")
+              .select("id")
+              .eq("guest_id", payload.guest_id!)
+              .eq("dept_code", picked.code)
+              .maybeSingle();
+
+        if (!existingDept) {
+          await admin.from("collected_departments").insert({
+            user_id: payload.user_id,
+            guest_id: payload.guest_id,
+            dept_code: picked.code,
+            dept_name: picked.name,
+            region: picked.region,
+            quiz_date: today,
+          });
+
+          reward = {
+            dept_code: picked.code,
+            dept_name: picked.name,
+            region: picked.region,
+            region_color: getRegionColor(picked.region),
+            is_new: true,
+          };
+        }
+      }
+    }
+
     return NextResponse.json({
       score: result.score,
       points: result.points,
       quizNumber: result.quiz_number,
+      breakdown,
+      joker: {
+        played: result.joker_played,
+        won: result.joker_won,
+      },
+      reward,
     });
   } catch (error) {
     console.error(error);

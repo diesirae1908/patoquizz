@@ -34,6 +34,12 @@ export async function POST(request: Request) {
           .update({ user_id: data.user.id, guest_id: null })
           .eq("guest_id", guestId)
           .is("user_id", null);
+
+        await admin
+          .from("collected_departments")
+          .update({ user_id: data.user.id, guest_id: null })
+          .eq("guest_id", guestId)
+          .is("user_id", null);
       }
     }
 

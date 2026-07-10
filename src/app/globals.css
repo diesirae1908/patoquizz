@@ -19,3 +19,14 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
+
+@keyframes bounce-once {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-12px); }
+  50% { transform: translateY(-6px); }
+  70% { transform: translateY(-3px); }
+}
+
+.animate-bounce-once {
+  animation: bounce-once 0.8s ease-out;
+}
