@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Patoquizz
 
-## Getting Started
+Quiz quotidien de géographie française, inspiré de SUTOM/Wordle.
 
-First, run the development server:
+## Fonctionnalités
+
+- 6 questions par jour, difficulté croissante
+- Réponse libre avec tolérance aux fautes de frappe
+- Partage spoiler-free du résultat
+- Compte optionnel avec statistiques et classement
+- Plus de 1 100 questions pré-générées
+
+## Stack
+
+- Next.js 16 (App Router)
+- Supabase (Postgres + Auth)
+- Tailwind CSS
+- Déploiement Render
+
+## Développement local
 
 ```bash
+npm install
+cp .env.example .env.local
+# Remplir les variables Supabase
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Base de données
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Exécuter `supabase/migrations/001_initial_schema.sql` dans l'éditeur SQL Supabase
+2. Lancer le seed :
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run seed
+```
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev` — serveur de développement
+- `npm run build` — build production
+- `npm run seed` — insérer questions et quiz quotidiens
+- `npm run questions:count` — compter les questions générées
