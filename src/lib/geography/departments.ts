@@ -111,6 +111,46 @@ export const DEPARTMENTS: Department[] = [
   { code: "976", name: "Mayotte", prefecture: "Mamoudzou", region: "Mayotte", sousPrefectures: [], notoriety: 5 },
 ];
 
+/** Departments used with "le" (du) — everything else defaults to "la" (de la). */
+const MASCULINE_DEPARTMENTS = new Set([
+  "Calvados", "Cantal", "Cher", "Doubs", "Finistère", "Gard", "Gers", "Jura",
+  "Loir-et-Cher", "Loiret", "Lot", "Lot-et-Garonne", "Maine-et-Loire",
+  "Morbihan", "Nord", "Pas-de-Calais", "Puy-de-Dôme", "Rhône", "Bas-Rhin",
+  "Haut-Rhin", "Tarn", "Tarn-et-Garonne", "Var", "Vaucluse",
+  "Territoire de Belfort", "Val-de-Marne", "Val-d'Oise",
+]);
+
+const PLURAL_PREFIXES = [
+  "Alpes", "Ardennes", "Bouches", "Côtes", "Deux-Sèvres", "Hautes-Alpes",
+  "Hautes-Pyrénées", "Hauts-de-Seine", "Landes", "Pyrénées", "Vosges",
+  "Yvelines",
+];
+
+const GENITIVE_EXCEPTIONS: Record<string, string> = {
+  Paris: "de Paris",
+  Mayotte: "de Mayotte",
+  "La Réunion": "de La Réunion",
+  Hérault: "de l'Hérault",
+};
+
+/**
+ * French genitive phrase for a department name, e.g. "de l'Ain", "du Nord",
+ * "de la Gironde", "des Vosges". Used to build grammatical questions.
+ */
+export function getDeptGenitive(name: string): string {
+  if (GENITIVE_EXCEPTIONS[name]) return GENITIVE_EXCEPTIONS[name];
+  if (PLURAL_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+    return `des ${name}`;
+  }
+  if (/^[AEIOUYÉÈÊÀÎ]/i.test(name)) {
+    return `de l'${name}`;
+  }
+  if (MASCULINE_DEPARTMENTS.has(name)) {
+    return `du ${name}`;
+  }
+  return `de la ${name}`;
+}
+
 export const REGIONS = [
   "Auvergne-Rhône-Alpes",
   "Bourgogne-Franche-Comté",

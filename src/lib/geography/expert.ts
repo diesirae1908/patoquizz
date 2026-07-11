@@ -128,9 +128,9 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 5,
   },
   {
-    text: "Quelle est la sous-préfecture du Lot située à Figeac ?",
-    accepted_answers: ["Figeac"],
-    display_answer: "Figeac",
+    text: "Dans quel département se trouve le viaduc de Millau ?",
+    accepted_answers: ["Aveyron", "12"],
+    display_answer: "Aveyron",
     difficulty: 5,
   },
   {
@@ -140,9 +140,9 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 5,
   },
   {
-    text: "Quelle est la sous-préfecture du Gers située à Condom ?",
-    accepted_answers: ["Condom"],
-    display_answer: "Condom",
+    text: "Dans quel département se trouve le Mont-Saint-Michel ?",
+    accepted_answers: ["Manche", "50"],
+    display_answer: "Manche",
     difficulty: 5,
   },
   {
@@ -196,9 +196,9 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 6,
   },
   {
-    text: "Quelle est la sous-préfecture du département de l'Ariège située à Saint-Girons ?",
-    accepted_answers: ["Saint-Girons", "Saint Girons"],
-    display_answer: "Saint-Girons",
+    text: "Quel est le plus haut sommet du Massif central ?",
+    accepted_answers: ["Puy de Sancy", "Sancy"],
+    display_answer: "Puy de Sancy",
     difficulty: 6,
   },
   {
@@ -268,15 +268,15 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 6,
   },
   {
-    text: "Quelle sous-préfecture du Bas-Rhin se trouve à Haguenau ?",
-    accepted_answers: ["Haguenau"],
-    display_answer: "Haguenau",
+    text: "Dans quel estuaire se rejettent la Garonne et la Dordogne ?",
+    accepted_answers: ["Gironde", "estuaire de la Gironde"],
+    display_answer: "L'estuaire de la Gironde",
     difficulty: 6,
   },
   {
-    text: "Quelle sous-préfecture du Haut-Rhin se trouve à Thann ?",
-    accepted_answers: ["Thann"],
-    display_answer: "Thann",
+    text: "Dans quel département se trouvent les gorges du Verdon ?",
+    accepted_answers: ["Alpes-de-Haute-Provence", "Var", "04", "83"],
+    display_answer: "Alpes-de-Haute-Provence / Var",
     difficulty: 6,
   },
   {
@@ -298,15 +298,15 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 6,
   },
   {
-    text: "Quelle est la sous-préfecture du Morbihan située à Pontivy ?",
-    accepted_answers: ["Pontivy"],
-    display_answer: "Pontivy",
+    text: "Dans quel département se trouve le cirque de Gavarnie ?",
+    accepted_answers: ["Hautes-Pyrénées", "Hautes Pyrenees", "65"],
+    display_answer: "Hautes-Pyrénées",
     difficulty: 6,
   },
   {
-    text: "Quelle est la sous-préfecture de la Manche située à Coutances ?",
-    accepted_answers: ["Coutances"],
-    display_answer: "Coutances",
+    text: "Quel fleuve se jette dans la Manche au Havre ?",
+    accepted_answers: ["Seine"],
+    display_answer: "Seine",
     difficulty: 6,
   },
   {

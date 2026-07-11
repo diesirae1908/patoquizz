@@ -11,9 +11,9 @@ export const EASY_QUESTIONS: EasyQuestion[] = [
     display_answer: "Paris",
   },
   {
-    text: "Dans quel département se trouve Paris ?",
-    accepted_answers: ["Paris", "75"],
-    display_answer: "Paris",
+    text: "Quel est le numéro du département de Paris ?",
+    accepted_answers: ["75"],
+    display_answer: "75",
   },
   {
     text: "Dans quel département se trouve la ville de Marseille ?",

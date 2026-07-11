@@ -1,8 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
+import { normalizeAnswer } from "../answer-checker";
 import { QUESTIONS_PER_DAY, SLOT_DIFFICULTIES } from "../game-config";
-import type { Question } from "../types";
+import type { Question, QuestionCategory } from "../types";
 import { CITIES } from "./cities";
-import { DEPARTMENTS } from "./departments";
+import { DEPARTMENTS, getDeptGenitive } from "./departments";
 import { EASY_QUESTIONS } from "./easy";
 import { EXPERT_QUESTIONS } from "./expert";
 import { MISC_QUESTIONS } from "./misc";
@@ -17,6 +18,31 @@ function deptByCode(code: string) {
 
 function notorietyToDifficulty(notoriety: number, offset = 0): number {
   return clampDifficulty(notoriety + offset);
+}
+
+function cityGenitive(name: string): string {
+  return /^[AEIOUYÉÈÊÀÎ]/i.test(name) ? `d'${name}` : `de ${name}`;
+}
+
+/**
+ * True when an accepted answer appears verbatim in the question text
+ * (e.g. "Quelle est la sous-préfecture ... située à Castellane ?" with the
+ * answer Castellane). Such questions must never reach players.
+ */
+export function revealsAnswer(text: string, acceptedAnswers: string[]): boolean {
+  const questionWords = normalizeAnswer(text).split(" ");
+  return acceptedAnswers.some((answer) => {
+    const answerWords = normalizeAnswer(answer)
+      .split(" ")
+      .filter((word) => word.length > 1);
+    if (answerWords.length === 0) return false;
+    for (let i = 0; i + answerWords.length <= questionWords.length; i += 1) {
+      if (answerWords.every((word, j) => questionWords[i + j] === word)) {
+        return true;
+      }
+    }
+    return false;
+  });
 }
 
 export function generateAllQuestions(): Question[] {
@@ -34,10 +60,12 @@ export function generateAllQuestions(): Question[] {
   }
 
   for (const dept of DEPARTMENTS) {
+    const genitive = getDeptGenitive(dept.name);
+
     questions.push({
       id: uuidv4(),
-      text: `Quelle est la préfecture du ${dept.name} ?`,
-      accepted_answers: [dept.prefecture, dept.name, dept.code],
+      text: `Quelle est la préfecture ${genitive} ?`,
+      accepted_answers: [dept.prefecture],
       display_answer: dept.prefecture,
       difficulty: notorietyToDifficulty(dept.notoriety),
       category: "prefecture",
@@ -45,7 +73,16 @@ export function generateAllQuestions(): Question[] {
 
     questions.push({
       id: uuidv4(),
-      text: `Quel est le numéro du département ${dept.name} ?`,
+      text: `De quel département ${dept.prefecture} est-elle la préfecture ?`,
+      accepted_answers: [dept.name, dept.code],
+      display_answer: dept.name,
+      difficulty: notorietyToDifficulty(dept.notoriety, 1),
+      category: "prefecture",
+    });
+
+    questions.push({
+      id: uuidv4(),
+      text: `Quel est le numéro du département ${genitive} ?`,
       accepted_answers: [dept.code],
       display_answer: dept.code,
       difficulty: notorietyToDifficulty(dept.notoriety, 1),
@@ -63,31 +100,33 @@ export function generateAllQuestions(): Question[] {
 
     questions.push({
       id: uuidv4(),
-      text: `Dans quelle région se trouve le département ${dept.name} ?`,
+      text: `Dans quelle région se trouve le département ${genitive} ?`,
       accepted_answers: [dept.region],
       display_answer: dept.region,
       difficulty: notorietyToDifficulty(dept.notoriety, 1),
       category: "region",
     });
 
-    for (const sousPrefecture of dept.sousPrefectures) {
+    if (dept.sousPrefectures.length > 0) {
       questions.push({
         id: uuidv4(),
-        text: `Citez une sous-préfecture du ${dept.name}.`,
+        text: `Citez une sous-préfecture ${genitive}.`,
         accepted_answers: dept.sousPrefectures,
-        display_answer: sousPrefecture,
+        display_answer: dept.sousPrefectures[0],
         difficulty: notorietyToDifficulty(dept.notoriety, 2),
         category: "sous_prefecture",
       });
 
-      questions.push({
-        id: uuidv4(),
-        text: `Quelle est la sous-préfecture du ${dept.name} située à ${sousPrefecture} ?`,
-        accepted_answers: [sousPrefecture],
-        display_answer: sousPrefecture,
-        difficulty: notorietyToDifficulty(dept.notoriety, 2),
-        category: "sous_prefecture",
-      });
+      for (const sousPrefecture of dept.sousPrefectures) {
+        questions.push({
+          id: uuidv4(),
+          text: `Dans quel département se trouve la sous-préfecture ${cityGenitive(sousPrefecture)} ?`,
+          accepted_answers: [dept.name, dept.code],
+          display_answer: dept.name,
+          difficulty: notorietyToDifficulty(dept.notoriety, 2),
+          category: "sous_prefecture",
+        });
+      }
     }
   }
 
@@ -97,7 +136,7 @@ export function generateAllQuestions(): Question[] {
 
     questions.push({
       id: uuidv4(),
-      text: `Dans quel département se trouve la ville de ${city.name} ?`,
+      text: `Dans quel département se trouve la ville ${cityGenitive(city.name)} ?`,
       accepted_answers: [dept.name, dept.code],
       display_answer: dept.name,
       difficulty: notorietyToDifficulty(city.notoriety),
@@ -127,7 +166,9 @@ export function generateAllQuestions(): Question[] {
     });
   }
 
-  return questions;
+  return questions.filter(
+    (question) => !revealsAnswer(question.text, question.accepted_answers)
+  );
 }
 
 export function groupQuestionsByDifficulty(
@@ -140,6 +181,14 @@ export function groupQuestionsByDifficulty(
     return groups;
   }, {});
 }
+
+const NUMERIC_CATEGORIES: ReadonlySet<QuestionCategory> = new Set([
+  "numero_departement",
+  "departement_numero",
+] as QuestionCategory[]);
+
+const MAX_NUMERIC_PER_DAY = 2;
+const MAX_SAME_CATEGORY_PER_DAY = 3;
 
 export function buildDailyQuizzes(
   questions: Question[],
@@ -161,6 +210,8 @@ export function buildDailyQuizzes(
     currentDate.setDate(start.getDate() + day);
     const quizDate = currentDate.toISOString().slice(0, 10);
     const questionIds: string[] = [];
+    const categoryCounts = new Map<QuestionCategory, number>();
+    let numericCount = 0;
 
     for (let slot = 0; slot < QUESTIONS_PER_DAY; slot += 1) {
       const difficulty = SLOT_DIFFICULTIES[slot];
@@ -168,24 +219,35 @@ export function buildDailyQuizzes(
         (question) => !usedIds.has(question.id)
       );
 
-      if (pool.length === 0) {
-        const fallbackPool = questions.filter(
-          (question) =>
-            question.difficulty === difficulty && !usedIds.has(question.id)
-        );
-        const pick =
-          fallbackPool[(day * 7 + slot) % Math.max(fallbackPool.length, 1)] ??
-          questions.find((question) => !usedIds.has(question.id));
-        if (pick) {
-          questionIds.push(pick.id);
-          usedIds.add(pick.id);
-        }
-        continue;
+      const fallbackPool =
+        pool.length > 0
+          ? pool
+          : questions.filter((question) => !usedIds.has(question.id));
+
+      if (fallbackPool.length === 0) continue;
+
+      const startIdx = (day * 7 + slot + 1) % fallbackPool.length;
+      let pick = fallbackPool[startIdx];
+
+      for (let k = 0; k < fallbackPool.length; k += 1) {
+        const candidate = fallbackPool[(startIdx + k) % fallbackPool.length];
+        const sameCategory = categoryCounts.get(candidate.category) ?? 0;
+        const isNumeric = NUMERIC_CATEGORIES.has(candidate.category);
+
+        if (isNumeric && numericCount >= MAX_NUMERIC_PER_DAY) continue;
+        if (sameCategory >= MAX_SAME_CATEGORY_PER_DAY) continue;
+
+        pick = candidate;
+        break;
       }
 
-      const pick = pool[(day * 7 + slot + 1) % pool.length];
       questionIds.push(pick.id);
       usedIds.add(pick.id);
+      categoryCounts.set(
+        pick.category,
+        (categoryCounts.get(pick.category) ?? 0) + 1
+      );
+      if (NUMERIC_CATEGORIES.has(pick.category)) numericCount += 1;
     }
 
     dailyQuizzes.push({
