@@ -187,8 +187,15 @@ const NUMERIC_CATEGORIES: ReadonlySet<QuestionCategory> = new Set([
   "departement_numero",
 ] as QuestionCategory[]);
 
+function isNumericQuestion(question: Question): boolean {
+  return (
+    NUMERIC_CATEGORIES.has(question.category) ||
+    question.text.toLowerCase().includes("numéro")
+  );
+}
+
 const MAX_NUMERIC_PER_DAY = 2;
-const MAX_SAME_CATEGORY_PER_DAY = 3;
+const MAX_SAME_CATEGORY_PER_DAY = 2;
 
 export function buildDailyQuizzes(
   questions: Question[],
@@ -210,20 +217,27 @@ export function buildDailyQuizzes(
     currentDate.setDate(start.getDate() + day);
     const quizDate = currentDate.toISOString().slice(0, 10);
     const questionIds: string[] = [];
+    const dayIds = new Set<string>();
     const categoryCounts = new Map<QuestionCategory, number>();
     let numericCount = 0;
 
     for (let slot = 0; slot < QUESTIONS_PER_DAY; slot += 1) {
       const difficulty = SLOT_DIFFICULTIES[slot];
-      const pool = (byDifficulty[difficulty] ?? []).filter(
-        (question) => !usedIds.has(question.id)
-      );
+      const bucket = byDifficulty[difficulty] ?? [];
+      let pool = bucket.filter((question) => !usedIds.has(question.id));
+
+      // Bucket exhausted: recycle questions of this difficulty (never
+      // repeating within the same day) so the difficulty progression holds
+      // no matter how many days are generated.
+      if (pool.length === 0) {
+        for (const question of bucket) usedIds.delete(question.id);
+        pool = bucket.filter((question) => !dayIds.has(question.id));
+      }
 
       const fallbackPool =
         pool.length > 0
           ? pool
-          : questions.filter((question) => !usedIds.has(question.id));
-
+          : questions.filter((question) => !dayIds.has(question.id));
       if (fallbackPool.length === 0) continue;
 
       const startIdx = (day * 7 + slot + 1) % fallbackPool.length;
@@ -232,9 +246,9 @@ export function buildDailyQuizzes(
       for (let k = 0; k < fallbackPool.length; k += 1) {
         const candidate = fallbackPool[(startIdx + k) % fallbackPool.length];
         const sameCategory = categoryCounts.get(candidate.category) ?? 0;
-        const isNumeric = NUMERIC_CATEGORIES.has(candidate.category);
 
-        if (isNumeric && numericCount >= MAX_NUMERIC_PER_DAY) continue;
+        if (isNumericQuestion(candidate) && numericCount >= MAX_NUMERIC_PER_DAY)
+          continue;
         if (sameCategory >= MAX_SAME_CATEGORY_PER_DAY) continue;
 
         pick = candidate;
@@ -243,11 +257,12 @@ export function buildDailyQuizzes(
 
       questionIds.push(pick.id);
       usedIds.add(pick.id);
+      dayIds.add(pick.id);
       categoryCounts.set(
         pick.category,
         (categoryCounts.get(pick.category) ?? 0) + 1
       );
-      if (NUMERIC_CATEGORIES.has(pick.category)) numericCount += 1;
+      if (isNumericQuestion(pick)) numericCount += 1;
     }
 
     dailyQuizzes.push({
