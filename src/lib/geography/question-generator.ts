@@ -16,8 +16,51 @@ function deptByCode(code: string) {
   return DEPARTMENTS.find((dept) => dept.code === code);
 }
 
-function notorietyToDifficulty(notoriety: number, offset = 0): number {
-  return clampDifficulty(notoriety + offset);
+// --- Expert-calibrated difficulty mappings (calibration of 2026-07-10) ---
+// A French-geography expert ranked 50 sample questions; these maps translate
+// notoriety scores into their observed difficulty per question type.
+
+/** "Which department is city X in": Rennes rated 4, Pessac/Vichy rated 5. */
+const CITY_DIFFICULTY: Record<number, number> = {
+  1: 2, 2: 4, 3: 5, 4: 5, 5: 5, 6: 6,
+};
+
+/** "Quelle est la préfecture de X": Gironde rated 3, Isère/Ain/Dordogne 4. */
+const PREFECTURE_DIFFICULTY: Record<number, number> = {
+  1: 2, 2: 4, 3: 4, 4: 5, 5: 5, 6: 6,
+};
+
+/** "Quel est le numéro de X": plateaus at 4 (Savoie and Gers both rated 4). */
+const NUMERO_DIFFICULTY: Record<number, number> = {
+  1: 3, 2: 4, 3: 4, 4: 4, 5: 5, 6: 5,
+};
+
+/** "Quel département porte le numéro N": 13 rated 2, harder ones cap out. */
+const NUMERO_REVERSE_DIFFICULTY: Record<number, number> = {
+  1: 2, 2: 4, 3: 4, 4: 5, 5: 5, 6: 6,
+};
+
+/** Region questions rated ~4 regardless of department fame (Nord 4, Creuse 4). */
+function regionDifficulty(notoriety: number): number {
+  return notoriety <= 1 ? 3 : 4;
+}
+
+/** "Dans quel département se trouve la sous-préfecture X": Dax rated 4. */
+function reverseSousPrefectureDifficulty(notoriety: number): number {
+  return clampDifficulty(Math.max(4, notoriety + 1));
+}
+
+/** "De quel département X est-elle la préfecture": Nantes 4, Chaumont 6. */
+function reversePrefectureDifficulty(notoriety: number): number {
+  return clampDifficulty(Math.max(4, notoriety + 2));
+}
+
+/**
+ * Naming any sous-préfecture is hard even for famous departments
+ * (Rhône and Calvados both rated 6, Ariège 5).
+ */
+function citeSousPrefectureDifficulty(notoriety: number): number {
+  return notoriety <= 3 ? 6 : 5;
 }
 
 function cityGenitive(name: string): string {
@@ -54,7 +97,7 @@ export function generateAllQuestions(): Question[] {
       text: easy.text,
       accepted_answers: easy.accepted_answers,
       display_answer: easy.display_answer,
-      difficulty: 1,
+      difficulty: easy.difficulty ?? 1,
       category: "divers",
     });
   }
@@ -67,7 +110,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quelle est la préfecture ${genitive} ?`,
       accepted_answers: [dept.prefecture],
       display_answer: dept.prefecture,
-      difficulty: notorietyToDifficulty(dept.notoriety),
+      difficulty: PREFECTURE_DIFFICULTY[dept.notoriety] ?? 4,
       category: "prefecture",
     });
 
@@ -76,7 +119,7 @@ export function generateAllQuestions(): Question[] {
       text: `De quel département ${dept.prefecture} est-elle la préfecture ?`,
       accepted_answers: [dept.name, dept.code],
       display_answer: dept.name,
-      difficulty: notorietyToDifficulty(dept.notoriety, 1),
+      difficulty: reversePrefectureDifficulty(dept.notoriety),
       category: "prefecture",
     });
 
@@ -85,7 +128,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quel est le numéro du département ${genitive} ?`,
       accepted_answers: [dept.code],
       display_answer: dept.code,
-      difficulty: notorietyToDifficulty(dept.notoriety, 1),
+      difficulty: NUMERO_DIFFICULTY[dept.notoriety] ?? 4,
       category: "numero_departement",
     });
 
@@ -94,7 +137,7 @@ export function generateAllQuestions(): Question[] {
       text: `Quel département porte le numéro ${dept.code} ?`,
       accepted_answers: [dept.name],
       display_answer: dept.name,
-      difficulty: notorietyToDifficulty(dept.notoriety, 1),
+      difficulty: NUMERO_REVERSE_DIFFICULTY[dept.notoriety] ?? 4,
       category: "departement_numero",
     });
 
@@ -103,7 +146,7 @@ export function generateAllQuestions(): Question[] {
       text: `Dans quelle région se trouve le département ${genitive} ?`,
       accepted_answers: [dept.region],
       display_answer: dept.region,
-      difficulty: notorietyToDifficulty(dept.notoriety, 1),
+      difficulty: regionDifficulty(dept.notoriety),
       category: "region",
     });
 
@@ -113,7 +156,7 @@ export function generateAllQuestions(): Question[] {
         text: `Citez une sous-préfecture ${genitive}.`,
         accepted_answers: dept.sousPrefectures,
         display_answer: dept.sousPrefectures[0],
-        difficulty: notorietyToDifficulty(dept.notoriety, 2),
+        difficulty: citeSousPrefectureDifficulty(dept.notoriety),
         category: "sous_prefecture",
       });
 
@@ -123,7 +166,7 @@ export function generateAllQuestions(): Question[] {
           text: `Dans quel département se trouve la sous-préfecture ${cityGenitive(sousPrefecture)} ?`,
           accepted_answers: [dept.name, dept.code],
           display_answer: dept.name,
-          difficulty: notorietyToDifficulty(dept.notoriety, 2),
+          difficulty: reverseSousPrefectureDifficulty(dept.notoriety),
           category: "sous_prefecture",
         });
       }
@@ -139,7 +182,7 @@ export function generateAllQuestions(): Question[] {
       text: `Dans quel département se trouve la ville ${cityGenitive(city.name)} ?`,
       accepted_answers: [dept.name, dept.code],
       display_answer: dept.name,
-      difficulty: notorietyToDifficulty(city.notoriety),
+      difficulty: CITY_DIFFICULTY[city.notoriety] ?? 4,
       category: "ville_departement",
     });
   }

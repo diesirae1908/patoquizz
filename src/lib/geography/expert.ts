@@ -2,7 +2,7 @@ export interface ExpertQuestion {
   text: string;
   accepted_answers: string[];
   display_answer: string;
-  difficulty: 5 | 6;
+  difficulty: 4 | 5 | 6;
 }
 
 export const EXPERT_QUESTIONS: ExpertQuestion[] = [
@@ -65,7 +65,7 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     text: "Quel fleuve traverse la ville de Montpellier ?",
     accepted_answers: ["Lez"],
     display_answer: "Lez",
-    difficulty: 5,
+    difficulty: 6,
   },
   {
     text: "Quel est le département le plus peuplé de France ?",
@@ -83,13 +83,13 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     text: "Quel département a le plus de communes ?",
     accepted_answers: ["Pas-de-Calais", "Pas de Calais", "62"],
     display_answer: "Pas-de-Calais",
-    difficulty: 5,
+    difficulty: 6,
   },
   {
     text: "Quel département métropolitain a la plus faible densité de population ?",
     accepted_answers: ["Lozère", "48"],
     display_answer: "Lozère",
-    difficulty: 5,
+    difficulty: 6,
   },
   {
     text: "Quel département métropolitain a la plus forte densité de population ?",
@@ -143,13 +143,13 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     text: "Dans quel département se trouve le Mont-Saint-Michel ?",
     accepted_answers: ["Manche", "50"],
     display_answer: "Manche",
-    difficulty: 5,
+    difficulty: 4,
   },
   {
     text: "Quel département est entièrement enclavé dans un autre département ?",
     accepted_answers: ["Territoire de Belfort", "90"],
     display_answer: "Territoire de Belfort",
-    difficulty: 5,
+    difficulty: 6,
   },
   {
     text: "Quels départements composent la Corse ?",
@@ -199,7 +199,7 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     text: "Quel est le plus haut sommet du Massif central ?",
     accepted_answers: ["Puy de Sancy", "Sancy"],
     display_answer: "Puy de Sancy",
-    difficulty: 6,
+    difficulty: 5,
   },
   {
     text: "Quel fleuve traverse la ville de Guéret ?",
@@ -271,7 +271,7 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     text: "Dans quel estuaire se rejettent la Garonne et la Dordogne ?",
     accepted_answers: ["Gironde", "estuaire de la Gironde"],
     display_answer: "L'estuaire de la Gironde",
-    difficulty: 6,
+    difficulty: 5,
   },
   {
     text: "Dans quel département se trouvent les gorges du Verdon ?",
@@ -292,9 +292,9 @@ export const EXPERT_QUESTIONS: ExpertQuestion[] = [
     difficulty: 6,
   },
   {
-    text: "Quel département est traversé par la ligne du Méridien de Greenwich ?",
-    accepted_answers: ["Ain", "01"],
-    display_answer: "Ain",
+    text: "Dans quel département se trouve le gouffre de Padirac ?",
+    accepted_answers: ["Lot", "46"],
+    display_answer: "Lot",
     difficulty: 6,
   },
   {
