@@ -209,9 +209,16 @@ export function generateAllQuestions(): Question[] {
     });
   }
 
-  const valid = questions.filter(
-    (question) => !revealsAnswer(question.text, question.accepted_answers)
-  );
+  // Hand-written pools can duplicate generated questions (e.g. "Quel est le
+  // numéro du département de Paris ?"); keep only the first of each text.
+  const seenTexts = new Set<string>();
+  const valid = questions.filter((question) => {
+    if (revealsAnswer(question.text, question.accepted_answers)) return false;
+    const key = normalizeAnswer(question.text);
+    if (seenTexts.has(key)) return false;
+    seenTexts.add(key);
+    return true;
+  });
 
   // Deterministic shuffle so every question source (departments, cities,
   // misc, expert) is spread evenly across the daily quizzes instead of the
