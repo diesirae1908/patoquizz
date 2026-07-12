@@ -209,9 +209,30 @@ export function generateAllQuestions(): Question[] {
     });
   }
 
-  return questions.filter(
+  const valid = questions.filter(
     (question) => !revealsAnswer(question.text, question.accepted_answers)
   );
+
+  // Deterministic shuffle so every question source (departments, cities,
+  // misc, expert) is spread evenly across the daily quizzes instead of the
+  // hand-written pools clustering at the end of the schedule.
+  return seededShuffle(valid, 20260710);
+}
+
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const result = [...items];
+  let state = seed;
+  const next = () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 export function groupQuestionsByDifficulty(
@@ -240,12 +261,37 @@ function isNumericQuestion(question: Question): boolean {
 const MAX_NUMERIC_PER_DAY = 2;
 const MAX_SAME_CATEGORY_PER_DAY = 2;
 
+/**
+ * Round-robin interleave a bucket by category so rare categories (like the
+ * hand-written "divers" questions) are spread across the whole schedule
+ * instead of clustering wherever generation order put them.
+ */
+function interleaveByCategory(bucket: Question[]): Question[] {
+  const byCategory = new Map<QuestionCategory, Question[]>();
+  for (const question of bucket) {
+    const group = byCategory.get(question.category) ?? [];
+    group.push(question);
+    byCategory.set(question.category, group);
+  }
+  const groups = [...byCategory.values()];
+  const result: Question[] = [];
+  for (let i = 0; result.length < bucket.length; i += 1) {
+    for (const group of groups) {
+      if (i < group.length) result.push(group[i]);
+    }
+  }
+  return result;
+}
+
 export function buildDailyQuizzes(
   questions: Question[],
   startDate: string,
   days: number
 ): Array<{ quiz_date: string; quiz_number: number; question_ids: string[] }> {
   const byDifficulty = groupQuestionsByDifficulty(questions);
+  for (const key of Object.keys(byDifficulty)) {
+    byDifficulty[Number(key)] = interleaveByCategory(byDifficulty[Number(key)]);
+  }
   const usedIds = new Set<string>();
   const dailyQuizzes: Array<{
     quiz_date: string;
@@ -283,7 +329,10 @@ export function buildDailyQuizzes(
           : questions.filter((question) => !dayIds.has(question.id));
       if (fallbackPool.length === 0) continue;
 
-      const startIdx = (day * 7 + slot + 1) % fallbackPool.length;
+      // Deterministic scattered start so picks sample the whole pool from
+      // day one instead of walking it sequentially.
+      const startIdx =
+        ((day * 2654435761 + slot * 40503 + 12345) >>> 0) % fallbackPool.length;
       let pick = fallbackPool[startIdx];
 
       for (let k = 0; k < fallbackPool.length; k += 1) {
@@ -292,7 +341,13 @@ export function buildDailyQuizzes(
 
         if (isNumericQuestion(candidate) && numericCount >= MAX_NUMERIC_PER_DAY)
           continue;
-        if (sameCategory >= MAX_SAME_CATEGORY_PER_DAY) continue;
+        // "divers" is a heterogeneous catch-all (landmarks, rivers,
+        // demographics, borders...), so repeating it is fine.
+        if (
+          candidate.category !== "divers" &&
+          sameCategory >= MAX_SAME_CATEGORY_PER_DAY
+        )
+          continue;
 
         pick = candidate;
         break;
