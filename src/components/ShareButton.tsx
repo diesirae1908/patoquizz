@@ -13,6 +13,7 @@ import { QUESTIONS_PER_DAY } from "@/lib/game-config";
 interface ShareButtonProps {
   quizNumber: number;
   score: number;
+  points: number;
   results: QuestionResult[];
   joker: JokerState;
 }
@@ -20,6 +21,7 @@ interface ShareButtonProps {
 export function ShareButton({
   quizNumber,
   score,
+  points,
   results,
   joker,
 }: ShareButtonProps) {
@@ -35,6 +37,7 @@ export function ShareButton({
       quizNumber,
       score,
       totalQuestions: QUESTIONS_PER_DAY,
+      points,
       results,
       joker,
       siteUrl,

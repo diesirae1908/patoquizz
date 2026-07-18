@@ -105,6 +105,7 @@ export function buildShareText({
   quizNumber,
   score,
   totalQuestions,
+  points,
   results,
   joker,
   siteUrl,
@@ -112,6 +113,7 @@ export function buildShareText({
   quizNumber: number;
   score: number;
   totalQuestions: number;
+  points: number;
   results: QuestionResult[];
   joker: JokerState;
   siteUrl: string;
@@ -129,7 +131,7 @@ export function buildShareText({
   }
 
   return [
-    `#PATOQUIZZ #${quizNumber} ${score}/${totalQuestions}`,
+    `#PATOQUIZZ #${quizNumber} ${score}/${totalQuestions} · ${points} pts`,
     grid + jokerCell,
     siteUrl,
   ].join("\n");

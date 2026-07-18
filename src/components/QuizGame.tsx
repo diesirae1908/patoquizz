@@ -378,6 +378,7 @@ export function QuizGame() {
           <ShareButton
             quizNumber={quiz.quizNumber}
             score={finalScore}
+            points={points}
             results={results}
             joker={joker}
           />
